@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiHome, FiSearch, FiPlusCircle, FiUser, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiPlusCircle, FiUser, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 
 interface FeedHeaderProps {
   user: any;

@@ -4,7 +4,7 @@ import { SessionManager } from "./sessionManager";
 import { MdVisibility, MdVisibilityOff, MdLocationOn } from 'react-icons/md';
 import { useNotification } from '../../contexts/NotificationContext';
 import { createUserProfile } from '../storage/setupDatabase';
-import { detectLocationQuick, improveLocationInBackground, saveUserLocation, getLocationForDisplay, detectAndSaveLocation } from '../storage/locationStorage';
+import { saveUserLocation, getLocationForDisplay, detectAndSaveLocation } from '../storage/locationStorage';
 
 export default function AuthForm() {
   const { showSuccess, showError } = useNotification();

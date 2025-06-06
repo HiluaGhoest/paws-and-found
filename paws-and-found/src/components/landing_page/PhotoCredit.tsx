@@ -1,4 +1,4 @@
-import type { PhotoCredit } from '../types';
+import type { PhotoCredit } from '../../types';
 
 interface PhotoCreditProps {
   photoCredit: PhotoCredit;
