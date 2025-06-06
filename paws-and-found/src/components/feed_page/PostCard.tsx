@@ -1,9 +1,10 @@
 import { formatDistanceToNow } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaHeart, FaRegHeart, FaShare, FaSearch, FaCheck, FaPhone } from 'react-icons/fa';
 import { IoLocationSharp } from 'react-icons/io5';
 import { MdPets } from 'react-icons/md';
 import { supabase } from '../../lib/auth/supabaseClient';
+import ImageCarousel from '../misc/ImageCarousel';
 
 interface Post {
   id: string;
@@ -38,47 +39,117 @@ export default function PostCard({ post }: PostCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes || 0);
   const [overlays, setOverlays] = useState<OverlayInstance[]>([]);
+  const [isLoadingLike, setIsLoadingLike] = useState(false);
 
-  // Function to update likes in database
-  const updateLikesInDatabase = async (newLikeCount: number) => {
+  // Check if current user has liked this post
+  useEffect(() => {
+    checkIfUserLikedPost();
+  }, [post.id]);
+
+  const checkIfUserLikedPost = async () => {
     try {
-      const { error } = await supabase
-        .from('posts')
-        .update({ likes: newLikeCount })
-        .eq('id', post.id);
-      
-      if (error) {
-        console.error('Error updating likes:', error);
-        // Revert the like count on error
-        setLikeCount(post.likes || 0);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('post_likes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('post_id', post.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error checking like status:', error);
+        return;
       }
+
+      setIsLiked(!!data);
     } catch (error) {
-      console.error('Error updating likes:', error);
-      setLikeCount(post.likes || 0);
+      console.error('Error checking like status:', error);
     }
   };
 
   const handleLike = async () => {
-    const newIsLiked = !isLiked;
-    const newLikeCount = newIsLiked ? likeCount + 1 : likeCount - 1;
+    if (isLoadingLike) return;
     
-    // Optimistically update UI
-    setIsLiked(newIsLiked);
-    setLikeCount(newLikeCount);
-    
-    // Update database
-    await updateLikesInDatabase(Math.max(0, newLikeCount));
-  };  const handleDoubleClick = async (e: React.MouseEvent) => {
+    try {
+      setIsLoadingLike(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (isLiked) {
+        // Unlike: Remove from post_likes table
+        const { error } = await supabase
+          .from('post_likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('post_id', post.id);
+
+        if (error) {
+          console.error('Error unliking post:', error);
+          return;
+        }
+
+        // Update local state
+        setIsLiked(false);
+        setLikeCount(prev => Math.max(0, prev - 1));
+      } else {
+        // Like: Add to post_likes table
+        const { error } = await supabase
+          .from('post_likes')
+          .insert({
+            user_id: user.id,
+            post_id: post.id
+          });
+
+        if (error) {
+          console.error('Error liking post:', error);
+          return;
+        }
+
+        // Update local state
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    } finally {
+      setIsLoadingLike(false);
+    }
+  };
+
+  const handleDoubleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Always like, never unlike on double-click
-    if (!isLiked) {
-      const newLikeCount = likeCount + 1;
-      setIsLiked(true);
-      setLikeCount(newLikeCount);
-      
-      // Update database
-      await updateLikesInDatabase(newLikeCount);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Always like, never unlike on double-click
+      if (!isLiked && !isLoadingLike) {
+        setIsLoadingLike(true);
+        
+        const { error } = await supabase
+          .from('post_likes')
+          .insert({
+            user_id: user.id,
+            post_id: post.id
+          });
+
+        if (error) {
+          console.error('Error liking post:', error);
+          setIsLoadingLike(false);
+          return;
+        }
+
+        // Update local state
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+        setIsLoadingLike(false);
+      }
+    } catch (error) {
+      console.error('Error handling double click like:', error);
+      setIsLoadingLike(false);
     }
     
     const overlayId = Date.now() + Math.random(); // Unique ID for this overlay
@@ -197,29 +268,19 @@ export default function PostCard({ post }: PostCardProps) {
               {getStatusLabel(post.status)}
             </span>
           </div>
-        </div>        {/* Main Image - Fill vertical space */}
+        </div>        {/* Image Carousel */}
         {post.image_urls && post.image_urls.length > 0 && (
-          <div 
-            className="relative w-full h-screen max-h-[70vh] group"
-          >
-            <img
-              src={post.image_urls[0]}
-              alt={`${post.pet_name}`}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                console.warn('Failed to load image:', post.image_urls![0]);
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(post.image_urls![0], '_blank');
-              }}
+          <div className="relative group">
+            <ImageCarousel
+              images={post.image_urls}
+              altText={post.pet_name}
+              className="w-full h-screen max-h-[70vh]"
             />
-              {/* Overlay Buttons */}
-            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            
+            {/* Overlay Buttons */}
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
               {/* Action Buttons - Bottom Right */}
-              <div className="absolute bottom-4 right-4 flex flex-col space-y-3">
+              <div className="absolute bottom-4 right-4 flex flex-col space-y-3 pointer-events-auto">
                 {/* Profile Picture Button */}
                 <button
                   className="w-12 h-12 flex items-center justify-center transition-all duration-300"
@@ -245,7 +306,7 @@ export default function PostCard({ post }: PostCardProps) {
                     <FaRegHeart className="w-6 h-6 text-white" />
                   )}
                 </button>                {/* Comments Button - Removed since detail modal is removed */}
-
+                
                 {/* Share Button */}
                 <button
                   className="w-12 h-12 flex items-center justify-center transition-all duration-300"
@@ -268,13 +329,6 @@ export default function PostCard({ post }: PostCardProps) {
                 </button>
               </div>
             </div>
-            
-            {/* Image count indicator if multiple images */}
-            {post.image_urls.length > 1 && (
-              <div className="absolute top-3 right-3 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium">
-                1 / {post.image_urls.length}
-              </div>
-            )}
           </div>
         )}
 

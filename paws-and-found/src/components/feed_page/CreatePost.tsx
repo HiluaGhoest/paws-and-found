@@ -123,9 +123,7 @@ export default function CreatePost({ user, onPostCreated }: CreatePostProps) {
           setLoading(false);
           return;
         }
-      }
-
-      // Create the post with image URLs
+      }      // Create the post with image URLs
       const { error } = await supabase
         .from('posts')
         .insert([
@@ -137,6 +135,7 @@ export default function CreatePost({ user, onPostCreated }: CreatePostProps) {
             location: location.trim(),
             status,
             image_urls: imageUrls,
+            likes: 0,
             created_at: new Date().toISOString()
           }
         ]);
