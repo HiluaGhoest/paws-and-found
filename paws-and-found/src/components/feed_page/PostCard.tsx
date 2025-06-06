@@ -1,9 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
-import PostDetailModal from './PostDetailModal';
-import { FaHeart, FaRegHeart, FaComment, FaShare, FaSearch, FaCheck, FaPhone } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaShare, FaSearch, FaCheck, FaPhone } from 'react-icons/fa';
 import { IoLocationSharp } from 'react-icons/io5';
 import { MdPets } from 'react-icons/md';
+import { supabase } from '../../lib/auth/supabaseClient';
 
 interface Post {
   id: string;
@@ -14,6 +14,7 @@ interface Post {
   status: 'lost' | 'found' | 'adoption';
   created_at: string;
   user_id: string;
+  likes?: number;
   image_urls?: string[];
   profiles?: {
     email: string;
@@ -24,20 +25,96 @@ interface PostCardProps {
   post: Post;
 }
 
+interface OverlayInstance {
+  id: number;
+  animating: boolean;
+  offsetX: number;
+  offsetY: number;
+  rotation: number;
+}
+
 export default function PostCard({ post }: PostCardProps) {
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(post.likes || 0);
+  const [overlays, setOverlays] = useState<OverlayInstance[]>([]);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+  // Function to update likes in database
+  const updateLikesInDatabase = async (newLikeCount: number) => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({ likes: newLikeCount })
+        .eq('id', post.id);
+      
+      if (error) {
+        console.error('Error updating likes:', error);
+        // Revert the like count on error
+        setLikeCount(post.likes || 0);
+      }
+    } catch (error) {
+      console.error('Error updating likes:', error);
+      setLikeCount(post.likes || 0);
+    }
   };
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
+  const handleLike = async () => {
+    const newIsLiked = !isLiked;
+    const newLikeCount = newIsLiked ? likeCount + 1 : likeCount - 1;
+    
+    // Optimistically update UI
+    setIsLiked(newIsLiked);
+    setLikeCount(newLikeCount);
+    
+    // Update database
+    await updateLikesInDatabase(Math.max(0, newLikeCount));
+  };  const handleDoubleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleLike();
+    
+    // Always like, never unlike on double-click
+    if (!isLiked) {
+      const newLikeCount = likeCount + 1;
+      setIsLiked(true);
+      setLikeCount(newLikeCount);
+      
+      // Update database
+      await updateLikesInDatabase(newLikeCount);
+    }
+    
+    const overlayId = Date.now() + Math.random(); // Unique ID for this overlay
+    
+    // Generate random offset and rotation
+    const offsetX = (Math.random() - 0.5) * 100; // -50px to +50px
+    const offsetY = (Math.random() - 0.5) * 60;  // -30px to +30px
+    const rotation = (Math.random() - 0.5) * 60; // -30deg to +30deg
+    
+    // Add new overlay in hidden state with random positioning
+    setOverlays(prev => [...prev, { 
+      id: overlayId, 
+      animating: false,
+      offsetX,
+      offsetY,
+      rotation
+    }]);
+    
+    // Trigger entrance animation after a brief delay
+    setTimeout(() => {
+      setOverlays(prev => prev.map(overlay => 
+        overlay.id === overlayId ? { ...overlay, animating: true } : overlay
+      ));
+    }, 50);
+    
+    // Start fade out after 750ms
+    setTimeout(() => {
+      setOverlays(prev => prev.map(overlay => 
+        overlay.id === overlayId ? { ...overlay, animating: false } : overlay
+      ));
+    }, 750);
+    
+    // Remove overlay completely after fade out animation completes
+    setTimeout(() => {
+      setOverlays(prev => prev.filter(overlay => overlay.id !== overlayId));
+    }, 1050);
   };
 
   const getUserDisplayName = () => {
@@ -94,11 +171,11 @@ export default function PostCard({ post }: PostCardProps) {
       default:
         return status;
     }
-  };return (
-    <>      <div 
-        className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-2xl hover:shadow-xl hover:border-white/30 transition-all duration-300 cursor-pointer max-w-sm mx-auto"
-        onClick={() => setShowDetailModal(true)}
-      >
+  };  return (
+    <div 
+      className="relative bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-2xl hover:shadow-xl hover:border-white/30 transition-all duration-300 max-w-sm mx-auto"
+      onDoubleClick={handleDoubleClick}
+    >
         {/* Header */}
         <div className="p-3 pb-0">
           <div className="flex items-center justify-between mb-2">
@@ -124,7 +201,6 @@ export default function PostCard({ post }: PostCardProps) {
         {post.image_urls && post.image_urls.length > 0 && (
           <div 
             className="relative w-full h-screen max-h-[70vh] group"
-            onDoubleClick={handleDoubleClick}
           >
             <img
               src={post.image_urls[0]}
@@ -168,18 +244,7 @@ export default function PostCard({ post }: PostCardProps) {
                   ) : (
                     <FaRegHeart className="w-6 h-6 text-white" />
                   )}
-                </button>
-
-                {/* Comments Button */}
-                <button
-                  className="w-12 h-12 flex items-center justify-center transition-all duration-300"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDetailModal(true); // Open detail modal for comments
-                  }}
-                >
-                  <FaComment className="w-6 h-6 text-white" />
-                </button>
+                </button>                {/* Comments Button - Removed since detail modal is removed */}
 
                 {/* Share Button */}
                 <button
@@ -276,14 +341,24 @@ export default function PostCard({ post }: PostCardProps) {
               <span className="text-sm">Contact</span>
             </button>
           </div>
-        </div>
+        </div>        {/* Double-click Overlays */}
+        {overlays.map((overlay) => (
+          <div 
+            key={overlay.id}
+            className="absolute inset-0 rounded-2xl flex items-center justify-center z-50 pointer-events-none transition-all duration-300 ease-out"
+            style={{
+              transform: `translate(${overlay.offsetX}px, ${overlay.offsetY}px) ${overlay.animating ? 'scale(1.1)' : 'scale(0.8)'}`,
+              opacity: overlay.animating ? 1 : 0
+            }}
+          >
+            <FaHeart 
+              className="w-16 h-16 text-red-500 drop-shadow-2xl transition-all duration-300"
+              style={{
+                transform: `rotate(${overlay.rotation}deg) ${overlay.animating ? 'scale(1)' : 'scale(0.5)'}`
+              }}
+            />
+          </div>
+        ))}
       </div>
-
-    <PostDetailModal 
-      post={post}
-      isOpen={showDetailModal}
-      onClose={() => setShowDetailModal(false)}
-    />
-    </>
   );
 }

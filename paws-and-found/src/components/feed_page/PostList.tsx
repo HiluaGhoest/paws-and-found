@@ -11,6 +11,7 @@ interface Post {
   status: 'lost' | 'found' | 'adoption';
   created_at: string;
   user_id: string;
+  likes?: number;
   image_urls?: string[];
   profiles?: {
     email: string;
