@@ -1,0 +1,229 @@
+# Paws & Found Design System Style Guide
+Generated from Landing Page Analysis - June 6, 2025
+
+## Overview
+The Paws & Found application follows a modern, glass-morphism inspired design system with a strong emphasis on visual hierarchy, subtle animations, and a cohesive dark theme with accent colors.
+
+## Core Design Principles
+
+### 1. Glass-morphism & Transparency
+- Primary pattern: Semi-transparent backgrounds with backdrop blur
+- Implementation: `bg-white/10 backdrop-blur-lg` or `bg-black/70 backdrop-blur-sm`
+- Creates depth and modern aesthetic while maintaining readability
+- Used for: Cards, forms, overlays, and interactive elements
+
+### 2. Dark Theme Foundation
+- Base colors: Gray-900 (`bg-gray-900`) for primary backgrounds
+- Secondary: Gray-800 (`bg-gray-800`) for contrast areas
+- Text hierarchy: Pure white for headers, white/80 for secondary text
+
+### 3. Brand Color Palette
+- **Primary Brand Colors:**
+  - Blue: `blue-400` to `blue-600` (primary actions, links)
+  - Purple: `purple-500` to `purple-600` (accent, gradients)
+  - Blue-300: `text-blue-300` (taglines, secondary actions)
+
+- **Semantic Colors:**
+  - Success: Green variants
+  - Error/Warning: Red-400 (`text-red-400`, `border-red-400/50`)
+  - Info: Blue variants
+
+- **Neutral Colors:**
+  - Text: `text-white`, `text-white/80`, `text-white/70`
+  - Borders: `border-white/20`, `border-white/30`, `border-white/50`
+  - Backgrounds: `bg-gray-900`, `bg-gray-800`
+
+## Typography System
+
+### 1. Font Weights & Sizes
+- **Hero Headers:** `text-4xl font-black tracking-tight` (Brand name)
+- **Page Headers:** `text-2xl font-bold` (Section titles)
+- **Subheadings:** `text-lg font-semibold` (Taglines)
+- **Body Text:** `text-sm font-normal leading-relaxed` (Descriptions)
+- **Micro Text:** `text-xs` (Credits, fine print)
+
+### 2. Font Hierarchy
+- Primary: Bold/Black weights for emphasis
+- Secondary: Semibold for important information
+- Body: Normal weight for readability
+- Micro: Small text for supplementary information
+
+### 3. Text Colors by Context
+- Headers: `text-white` with `drop-shadow-lg`
+- Taglines: `text-blue-300`
+- Body: `text-gray-400`
+- Interactive: `text-blue-300 hover:text-blue-200`
+
+## Layout & Spacing
+
+### 1. Grid System
+- Split layouts: `w-1/2` for major sections
+- Container constraints: `max-w-lg`, `max-w-sm` for content width
+- Centering: `flex items-center justify-center` pattern
+
+### 2. Spacing Scale
+- Major sections: `space-y-4` (1rem gaps)
+- Related elements: `space-y-2` (0.5rem gaps)
+- Padding: `p-4`, `p-6` for containers; `px-3 py-2` for small elements
+- Margins: `mb-4`, `mb-5` for vertical separation
+
+### 3. Positioning
+- Absolute positioning for overlays: `absolute top-6 left-6`
+- Z-indexing: `z-10` for foreground elements
+- Relative containers for absolute children
+
+## Interactive Elements
+
+### 1. Buttons
+- **Primary Action:**
+  ```css
+  bg-gradient-to-r from-blue-500/80 to-purple-500/80 backdrop-blur-sm text-white py-4 rounded-xl hover:from-blue-600/80 hover:to-purple-600/80 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02]
+  ```
+
+- **Secondary Actions:**
+  ```css
+  bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600
+  ```
+
+- **Text Links:**
+  ```css
+  text-blue-300 hover:text-blue-200 underline font-medium transition-colors duration-300
+  ```
+
+### 2. Form Elements
+- **Input Fields:**
+  ```css
+  w-full p-4 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all duration-300 hover:border-white/50
+  ```
+
+- **Error States:**
+  ```css
+  border-red-400/50 ring-2 ring-red-400/50
+  ```
+
+- **Error Messages:**
+  ```css
+  text-red-400 text-sm bg-red-500/10 p-3 rounded-lg border border-red-400/20
+  ```
+
+### 3. Interactive States
+- Hover: Opacity changes, color shifts, subtle scale transforms
+- Focus: Ring-based focus indicators (`focus:ring-2 focus:ring-blue-400/50`)
+- Disabled: `disabled:opacity-50 disabled:cursor-not-allowed`
+
+## Visual Effects & Enhancements
+
+### 1. Gradients
+- **Brand Gradient:** `bg-gradient-to-r from-blue-400 to-purple-500`
+- **Button Gradients:** Semi-transparent gradients with backdrop blur
+- **Accent Lines:** `w-16 h-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full`
+
+### 2. Shadows & Depth
+- **Card Shadows:** `shadow-2xl` for primary containers
+- **Interactive Shadows:** `shadow-lg hover:shadow-xl`
+- **Text Shadows:** `drop-shadow-lg` for headers over images
+
+### 3. Animations & Transitions
+- **Standard Duration:** `transition-all duration-300`
+- **Color Transitions:** `transition-colors duration-300`
+- **Hover Transforms:** `transform hover:scale-[1.02]`
+- **Subtle Animations:** Avoid jarring movements, prefer smooth fades
+
+## Component Patterns
+
+### 1. Card Structure
+```css
+w-full max-w-lg mx-auto p-6 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-2xl
+```
+
+### 2. Overlay Pattern
+```css
+absolute bottom-4 right-4 bg-black/70 text-white text-xs px-3 py-2 rounded backdrop-blur-sm max-w-xs
+```
+
+### 3. Split Layout
+```css
+w-1/2 flex flex-col bg-gray-900 relative
+```
+
+## Accessibility Considerations
+
+### 1. Focus Management
+- Visible focus indicators using ring utilities
+- Logical tab order maintained
+- Auto-focus on primary actions where appropriate
+
+### 2. Color Contrast
+- Sufficient contrast maintained with white text on dark backgrounds
+- Error states use strong red variants for visibility
+- Interactive elements have clear hover/focus states
+
+### 3. Responsive Design
+- Flexible layouts using Flexbox
+- Relative units for spacing
+- Content constraints prevent extreme stretching
+
+## Background & Media
+
+### 1. Image Handling
+- Cover images: `bg-cover bg-center min-h-screen`
+- Loading states with centered messages
+- Proper attribution for external media
+
+### 2. Backdrop Effects
+- Consistent backdrop blur for glass-morphism
+- Layered transparency for depth
+
+## Implementation Guidelines
+
+### 1. When Creating New Components:
+- Start with the glass-morphism card pattern
+- Use the established color palette
+- Maintain consistent spacing scale
+- Include hover/focus states for interactive elements
+
+### 2. Form Components:
+- Follow the input field pattern with proper validation states
+- Use semantic colors for feedback
+- Include smooth transitions for state changes
+
+### 3. Navigation & Actions:
+- Primary actions use gradient buttons
+- Secondary actions use solid colors
+- Text links use the blue accent with underlines
+
+### 4. Layout Consistency:
+- Use established grid patterns
+- Maintain consistent padding/margins
+- Position overlays using absolute positioning with proper z-indexing
+
+## Development Notes
+
+### 1. Tailwind CSS Classes:
+- Leverage opacity utilities (e.g., `/10`, `/70`, `/80`)
+- Use backdrop-blur for glass effects
+- Implement hover states with pseudo-class variants
+
+### 2. Animation Performance:
+- Prefer CSS transitions over JavaScript animations
+- Use transform properties for smooth scaling
+- Maintain 300ms duration for consistency
+
+### 3. Responsive Considerations:
+- Test glass-morphism effects on various backgrounds
+- Ensure text remains readable across all states
+- Validate interactive element sizes for touch interfaces
+
+## Brand Identity Elements
+
+### 1. Logo/Brand Treatment:
+- "Paws & Found" in large, black font weight
+- Accompanied by gradient accent line
+- Positioned prominently with generous white space
+
+### 2. Tagline Styling:
+- "Find. Adopt. Love." in blue-300
+- Supported by descriptive text in gray-400
+- Maximum width constraints for readability
+
+This style guide should be referenced when creating new pages or components to maintain visual consistency throughout the Paws & Found application. The glass-morphism aesthetic combined with the dark theme creates a modern, professional appearance suitable for a pet adoption platform.

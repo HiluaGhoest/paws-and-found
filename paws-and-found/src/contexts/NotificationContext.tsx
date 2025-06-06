@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-import NotificationDropdown from '../components/NotificationDropdown';
+import NotificationDropdown from '../components/misc/NotificationDropdown';
 
 export interface Notification {
   id: string;
